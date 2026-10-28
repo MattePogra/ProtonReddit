@@ -1,37 +1,34 @@
 # ProtonReddit
 
-Personal, non-commercial project to analyze public discussions about Proton and privacy-related issues. The intended analysis compares responses to a discussion with authors' earlier public activity in Proton-focused communities.
+I'm building this small, non-commercial project to look at public conversations about Proton and privacy on Reddit. One question I want to explore is whether people commenting on a particular discussion had previously taken part in Proton-focused communities.
 
-## Current code
+Access to the Reddit Data API is still pending, so the code is here for review only.
 
-`reddit_collect.py` uses application-only OAuth to read the `/new` listing of each subreddit in `subreddits.txt`, then reads visible comment trees for the returned posts, expanding `MoreComments` stubs. It writes `posts.jsonl`, `comments.jsonl`, and `coverage.json` to a **new** output directory. Post and comment IDs are unique identifiers; `author` is a public username or null when unavailable. The JSONL files allow author matching within the collected corpus. No sentiment classification is implemented yet.
+## What the code does
 
-`reddit_api.py` is a compatibility entry point that calls the same collector. Use `reddit_collect.py` as the access-review source.
+`reddit_collect.py` is the collector. Once access is approved, it can read recent posts from the communities listed in `subreddits.txt` and the comments on those posts. It saves posts, comments, and a coverage report in a new local directory. It only reads public content; it does not post, vote, or message anyone. `reddit_api.py` is a short entry point to the same collector.
 
-`author_activity.py` takes a collected corpus and a target post ID. It reports one row per public commenter, counting their contributions in the **collected Proton corpus before the target post**. It checks that input post and comment IDs are unique. These are observed counts, not complete account histories or sentiment labels.
+`author_activity.py` works on a collection already saved locally. Given a post ID, it counts each commenter's earlier posts and comments **within that collection**. The counts are not a measure of anyone's full Reddit history. Sentiment analysis is not part of the code yet.
 
-## Coverage limits
+The collector uses Reddit's `/new` listing, which may not reach older posts. Some comment branches may also remain unavailable. The coverage report records what was retrieved and any unresolved comment branches, so missing history is not mistaken for no activity.
 
-**This code does not claim to retrieve every historical post or comment.** Reddit's `/new` listing can end before the beginning of a community's history. A `MoreComments` stub can also remain unresolved. `coverage.json` records returned pages, observed date ranges, item counts, and unresolved stubs. The community list is an initial verified set, not an exhaustive registry of every Proton-related subreddit. Complete historical coverage depends on what Reddit approves and provides. No code can grant that access on its own.
+## Running it after approval
 
-## Use after Reddit approval
-
-Set `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, and `REDDIT_USER_AGENT` in the environment. Never commit credentials. The script only makes read requests and does not post, vote, or message users. Run it only after Reddit approves this use case:
+Set `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, and a descriptive `REDDIT_USER_AGENT` in your local environment. Keep credentials and collected data out of Git. Then run:
 
 ```bash
 python3 reddit_collect.py --subreddits-file subreddits.txt --output-dir /path/to/new_run --approved-access
 ```
 
-After a collection, an author-activity summary can be generated without contacting Reddit:
+To summarize earlier activity for one post in that collection:
 
 ```bash
-python3 author_activity.py --posts /path/to/new_run/posts.jsonl --comments /path/to/new_run/comments.jsonl --target-post-id 1xg8nq9 --output /path/to/new_author_activity.csv
+python3 author_activity.py --posts /path/to/new_run/posts.jsonl --comments /path/to/new_run/comments.jsonl --target-post-id POST_ID --output /path/to/new_author_activity.csv
 ```
 
-The `--approved-access` flag is an operator confirmation, not proof of approval. Collected data must not be committed. Reddit requires deletion of content and author data removed from the platform; a retention and deletion procedure must be settled before collecting real data. This repository is currently for source review, not an operational archive.
+The `--approved-access` flag is a reminder for the person running the script; it does not verify approval. Before collecting real data, the project's scope and its process for removing deleted Reddit content still need to be settled in line with Reddit's requirements.
 
-## References
+## Reddit documentation
 
-- [Reddit Data API documentation](https://www.reddit.com/dev/api/)
-- [Reddit OAuth2 documentation](https://github.com/reddit-archive/reddit/wiki/oauth2)
-- [Reddit Data API guidance](https://support.reddithelp.com/hc/en-us/articles/16160319875092-Reddit-Data-API-Wiki)
+- [Data API guidance](https://support.reddithelp.com/hc/en-us/articles/16160319875092-Reddit-Data-API-Wiki)
+- [API reference](https://www.reddit.com/dev/api/)
