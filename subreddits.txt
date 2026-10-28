@@ -1,0 +1,6 @@
+# Initial confirmed Proton communities. Expand after verifying others.
+ProtonMail
+ProtonVPN
+ProtonDrive
+ProtonPass
+lumo
